@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Веб ОС - Терминал</title>
+    <style>
+        :root {
+            --primary-color: #6e45e2;
+            --secondary-color: #88d3ce;
+            --accent-color: #ff7e5f;
+            --text-color: #f0f0f0;
+            --bg-dark: #1a1a2e;
+            --bg-darker: #16213e;
+            --header-gradient: linear-gradient(90deg, #6e45e2, #8925e0);
+            --body-gradient: linear-gradient(135deg, #1a1a2e, #16213e);
+            --font-size: 16px;
+            --font-family: 'Fira Code', 'Courier New', monospace;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--body-gradient);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .terminal-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .terminal-header {
+            height: 40px;
+            background: var(--header-gradient);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-button {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+        
+        .terminal-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .terminal-body {
+            flex-grow: 1;
+            background: rgba(10, 10, 20, 0.7);
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            overflow-y: auto;
+            font-size: var(--font-size);
+        }
+        
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            animation: fadeIn 1s ease;
+        }
+        
+        .logo {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #6e45e2, #ff7e5f);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(110, 69, 226, 0.5);
+        }
+        
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #fff, #eee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .system-info {
+            max-width: 600px;
+            margin: 20px auto;
+            line-height: 1.6;
+        }
+        
+        .prompt {
+            display: flex;
+            margin: 15px 0;
+            align-items: center;
+        }
+        
+        .prompt-user {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .prompt-location {
+            color: var(--secondary-color);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .prompt-symbol {
+            color: var(--accent-color);
+            margin-right: 10px;
+        }
+        
+        .command-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            caret-color: var(--accent-color);
+        }
+        
+        .output {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .settings-panel {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            background: rgba(30, 30, 60, 0.95);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 100;
+            width: 300px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .settings-panel h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-settings {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .settings-option {
+            margin: 15px 0;
+        }
+        
+        .settings-option label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .gradient-preview {
+            width: 100%;
+            height: 30px;
+            border-radius: 4px;
+            margin-top: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        select, input[type="range"], button {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-family: inherit;
+        }
+        
+        button {
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Анимации */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        
+        /* Эффекты */
+        .terminal-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(110, 69, 226, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Скрытие welcome screen */
+        .welcome-screen.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="header-buttons">
+                <div class="header-button red" onclick="window.close()"></div>
+                <div class="header-button yellow" onclick="document.querySelector('.terminal-body').innerHTML = ''"></div>
+                <div class="header-button green" onclick="toggleFullscreen()"></div>
+            </div>
+            <div class="terminal-title">Веб ОС — Терминал</div>
+        </div>
+        <div class="terminal-body">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="logo">
+                    <div class="logo-text">ВОС</div>
+                </div>
+                <h1 style="background: linear-gradient(90deg, #6e45e2, #ff7e5f); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px;">Веб Операционная Система</h1>
+                
+                <div class="system-info">
+                    <p>Версия системы: <span style="color: #88d3ce;">1.0.0</span></p>
+                    <p>Сборка: <span style="color: #88d3ce;">2023.12.15</span></p>
+                    <p>Архитектура: <span style="color: #88d3ce;">Web x64</span></p>
+                    <p>Лицензия: <span style="color: #88d3ce;">Open Source</span></p>
+                    
+                    <div style="margin: 30px 0;">
+                        <p>Введите <span style="color: #ff7e5f;">help</span> для списка доступных команд</p>
+                        <p>Нажмите <span style="color: #ff7e5f;">settings</span> для настройки внешнего вида</p>
+                    </div>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 0.9em; color: rgba(255,255,255,0.6);">
+                        © 2023 Веб ОС | Все права защищены
+                    </div>
+                </div>
+            </div>
+            
+            <div id="commandHistory"></div>
+            
+            <div class="prompt">
+                <span class="prompt-user">user</span>
+                <span class="prompt-location">~/веб-ос</span>
+                <span class="prompt-symbol">❯</span>
+                <input type="text" class="command-input" id="commandInput" autofocus>
+                <span class="cursor">|</span>
+            </div>
+        </div>
+        
+        <div class="settings-panel" id="settingsPanel">
+            <h3>Настройки терминала
+                <span class="close-settings" onclick="closeSettings()">×</span>
+            </h3>
+            
+            <div class="settings-option">
+                <label for="themePreset">Цветовая схема:</label>
+                <select id="themePreset" class="theme-select">
+                    <option value="default">Стандартная</option>
+                    <option value="dark">Тёмная</option>
+                    <option value="ocean">Океан</option>
+                    <option value="sunset">Закат</option>
+                    <option value="forest">Лес</option>
+                </select>
+            </div>
+            
+            <div class="settings-option">
+                <label for="bgGradient">Градиент фона:</label>
+                <select id="bgGradient" class="gradient-select">
+                    <option value="135deg, #1a1a2e, #16213e">Стандартный</option>
+                    <option value="135deg, #0f0c29, #302b63">Фиолетовый</option>
+                    <option value="135deg, #000428, #004e92">Синий</option>
+                    <option value="135deg, #1e3c72, #2a5298">Морской</option>
+                    <option value="135deg, #3a1c71, #d76d77, #ffaf7b">Закат</option>
+                </select>
+                <div class="gradient-preview" id="bgPreview"></div>
+            </div>
+            
+            <div class="settings-option">
+                <label for="headerGradient">Градиент заголовка:</label>
+                <select id="headerGradient" class="gradient-select">
+                    <option value="90deg, #6e45e2, #8925e0">Стандартный</option>
+                    <option value="90deg, #ff7e5f, #feb47b">Оранжевый</option>
+                    <option value="90deg, #11998e, #38ef7d">Зелёный</option>
+                    <option value="90deg, #fc00ff, #00dbde">Розовый</option>
+                    <option value="90deg, #f857a6, #ff5858">Яркий</option>
+                </select>
+                <div class="gradient-preview" id="headerPreview"></div>
+            </div>
+            
+            <div class="settings-option">
+                <label for="fontSize">Размер шрифта: <span id="fontSizeValue">16</span>px</label>
+                <input type="range" id="fontSize" min="12" max="24" value="16">
+            </div>
+            
+            <div class="settings-option">
+                <label for="fontFamily">Шрифт:</label>
+                <select id="fontFamily">
+                    <option value="'Fira Code', 'Courier New', monospace">Fira Code (моноширинный)</option>
+                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (без засечек)</option>
+                    <option value="'Roboto', Arial, sans-serif">Roboto</option>
+                </select>
+            </div>
+            
+            <button id="applySettings">Применить настройки</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Превью градиентов
+            document.getElementById('bgPreview').style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)';
+            document.getElementById('headerPreview').style.background = 'linear-gradient(90deg, #6e45e2, #8925e0)';
+            
+            // Обновление значения размера шрифта
+            document.getElementById('fontSize').addEventListener('input', function() {
+                document.getElementById('fontSizeValue').textContent = this.value;
+            });
+            
+            // Фокус на поле ввода
+            document.getElementById('commandInput').focus();
+        });
+        
+        // Обработка команд
+        document.getElementById('commandInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const command = this.value.trim();
+                this.value = '';
+                
+                // Скрываем welcome screen после первой команды
+                if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
+                    document.getElementById('welcomeScreen').classList.add('hidden');
+                }
+                
+                // Добавляем введённую команду в историю
+                addCommandToHistory(command);
+                
+                // Обработка команд
+                processCommand(command);
+            }
+        });
+        
+        function addCommandToHistory(command) {
+            const historyDiv = document.getElementById('commandHistory');
+            
+            // Создаём элемент для отображения команды
+            const commandDiv = document.createElement('div');
+            commandDiv.className = 'prompt';
+            commandDiv.innerHTML = `
+                <span class="prompt-user">user</span>
+                <span class="prompt-location">~/веб-ос</span>
+                <span class="prompt-symbol">❯</span>
+                <span style="color: var(--text-color);">${command}</span>
+            `;
+            
+            historyDiv.appendChild(commandDiv);
+        }
+        
+        function processCommand(command) {
+            const historyDiv = document.getElementById('commandHistory');
+            let output = '';
+            
+            switch(command.toLowerCase()) {
+                case 'help':
+                    output = `Доступные команды:<br>
+                    <span style="color: #ff7e5f;">help</span> - показать эту справку<br>
+                    <span style="color: #ff7e5f;">settings</span> - открыть настройки терминала<br>
+                    <span style="color: #ff7e5f;">clear</span> - очистить терминал<br>
+                    <span style="color: #ff7e5f;">about</span> - информация о системе<br>
+                    <span style="color: #ff7e5f;">fullscreen</span> - переключить полноэкранный режим`;
+                    break;
+                    
+                case 'settings':
+                    document.getElementById('settingsPanel').style.display = 'block';
+                    return;
+                    
+                case 'clear':
+                    document.getElementById('commandHistory').innerHTML = '';
+                    scrollToBottom();
+                    return;
+                    
+                case 'about':
+                    output = `<span style="background: linear-gradient(90deg, #6e45e2, #ff7e5f); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: bold;">Веб ОС</span> — инновационная операционная система нового поколения.<br><br>
+                    <strong>Версия:</strong> 1.0.0<br>
+                    <strong>Сборка:</strong> 2023.12.15<br>
+                    <strong>Архитектура:</strong> Web x64<br>
+                    <strong>Лицензия:</strong> Open Source<br><br>
+                    © 2023 Веб ОС | Все права защищены`;
+                    break;
+                    
+                case 'fullscreen':
+                    toggleFullscreen();
+                    output = `Полноэкранный режим ${document.fullscreenElement ? 'выключен' : 'включен'}`;
+                    break;
+                    
+                case '':
+                    // Пустая команда - ничего не делаем
+                    return;
+                    
+                default:
+                    output = `<span style="color: #ff5f56;">Ошибка:</span> команда "${command}" не найдена. Введите "help" для списка команд.`;
+            }
+            
+            // Добавляем вывод команды
+            const outputDiv = document.createElement('div');
+            outputDiv.className = 'output';
+            outputDiv.innerHTML = output;
+            historyDiv.appendChild(outputDiv);
+            
+            scrollToBottom();
+        }
+        
+        function addOutput(text) {
+            const outputDiv = document.createElement('div');
+            outputDiv.className = 'output';
+            outputDiv.innerHTML = text;
+            
+            document.getElementById('commandHistory').appendChild(outputDiv);
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            const terminalBody = document.querySelector('.terminal-body');
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+        
+        // Настройки
+        document.getElementById('applySettings').addEventListener('click', function() {
+            // Применяем выбранную тему
+            const theme = document.getElementById('themePreset').value;
+            applyTheme(theme);
+            
+            // Применяем индивидуальные настройки
+            const bgGradient = document.getElementById('bgGradient').value;
+            const headerGradient = document.getElementById('headerGradient').value;
+            const fontSize = document.getElementById('fontSize').value;
+            const fontFamily = document.getElementById('fontFamily').value;
+            
+            document.documentElement.style.setProperty('--body-gradient', `linear-gradient(${bgGradient})`);
+            document.documentElement.style.setProperty('--header-gradient', `linear-gradient(${headerGradient})`);
+            document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
+            document.documentElement.style.setProperty('--font-family', fontFamily);
+            
+            closeSettings();
+        });
+        
+        function applyTheme(theme) {
+            switch(theme) {
+                case 'dark':
+                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0d0d0d, #1a1a1a)');
+                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #333, #555)');
+                    document.documentElement.style.setProperty('--primary-color', '#555');
+                    document.documentElement.style.setProperty('--accent-color', '#888');
+                    break;
+                    
+                case 'ocean':
+                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)');
+                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #11998e, #38ef7d)');
+                    document.documentElement.style.setProperty('--primary-color', '#11998e');
+                    document.documentElement.style.setProperty('--accent-color', '#38ef7d');
+                    break;
+                    
+                case 'sunset':
+                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b)');
+                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #ff5e62, #ff9966)');
+                    document.documentElement.style.setProperty('--primary-color', '#ff5e62');
+                    document.documentElement.style.setProperty('--accent-color', '#ff9966');
+                    break;
+                    
+                case 'forest':
+                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0a5042, #1b8a6b, #3bb78f)');
+                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #1b8a6b, #3bb78f)');
+                    document.documentElement.style.setProperty('--primary-color', '#1b8a6b');
+                    document.documentElement.style.setProperty('--accent-color', '#3bb78f');
+                    break;
+                    
+                default: // standard
+                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #1a1a2e, #16213e)');
+                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #6e45e2, #8925e0)');
+                    document.documentElement.style.setProperty('--primary-color', '#6e45e2');
+                    document.documentElement.style.setProperty('--accent-color', '#ff7e5f');
+            }
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsPanel').style.display = 'none';
+            document.getElementById('commandInput').focus();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    addOutput(`<span style="color: #ff5f56;">Ошибка:</span> ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Превью градиентов
+        document.querySelectorAll('.gradient-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const previewId = this.id.replace('Gradient', 'Preview');
+                const preview = document.getElementById(previewId);
+                preview.style.background = `linear-gradient(${this.value})`;
+            });
+        });
+        
+        // Обработка тем
+        document.getElementById('themePreset').addEventListener('change', function() {
+            const theme = this.value;
+            const bgSelect = document.getElementById('bgGradient');
+            const headerSelect = document.getElementById('headerGradient');
+            
+            switch(theme) {
+                case 'dark':
+                    bgSelect.value = '135deg, #0d0d0d, #1a1a1a';
+                    headerSelect.value = '90deg, #333, #555';
+                    break;
+                    
+                case 'ocean':
+                    bgSelect.value = '135deg, #0f2027, #203a43, #2c5364';
+                    headerSelect.value = '90deg, #11998e, #38ef7d';
+                    break;
+                    
+                case 'sunset':
+                    bgSelect.value = '135deg, #3a1c71, #d76d77, #ffaf7b';
+                    headerSelect.value = '90deg, #ff5e62, #ff9966';
+                    break;
+                    
+                case 'forest':
+                    bgSelect.value = '135deg, #0a5042, #1b8a6b, #3bb78f';
+                    headerSelect.value = '90deg, #1b8a6b, #3bb78f';
+                    break;
+                    
+                default: // standard
+                    bgSelect.value = '135deg, #1a1a2e, #16213e';
+                    headerSelect.value = '90deg, #6e45e2, #8925e0';
+            }
+            
+            // Обновляем превью
+            document.getElementById('bgPreview').style.background = `linear-gradient(${bgSelect.value})`;
+            document.getElementById('headerPreview').style.background = `linear-gradient(${headerSelect.value})`;
+        });
+    </script>
+</body>
+</html>
