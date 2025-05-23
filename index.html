@@ -3,611 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Веб ОС - Терминал</title>
+    <title>ВебОС Терминал</title>
     <style>
         :root {
-            --primary-color: #6e45e2;
-            --secondary-color: #88d3ce;
-            --accent-color: #ff7e5f;
-            --text-color: #f0f0f0;
-            --bg-dark: #1a1a2e;
-            --bg-darker: #16213e;
-            --header-gradient: linear-gradient(90deg, #6e45e2, #8925e0);
-            --body-gradient: linear-gradient(135deg, #1a1a2e, #16213e);
-            --font-size: 16px;
-            --font-family: 'Fira Code', 'Courier New', monospace;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --primary: #0ff;
+            --secondary: #f0f;
+            --bg: #000;
+            --text: #0f0;
+            --error: #f00;
+            --warning: #ff0;
         }
         
         body {
-            background: var(--body-gradient);
-            color: var(--text-color);
-            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
             height: 100vh;
             overflow: hidden;
-            transition: all 0.3s ease;
+            background-image: 
+                radial-gradient(circle at 75% 25%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 25% 75%, rgba(255, 0, 255, 0.05) 0%, transparent 50%);
         }
         
-        .terminal-container {
-            width: 100%;
+        #terminal {
+            display: flex;
+            flex-direction: column;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .terminal-header {
-            height: 40px;
-            background: var(--header-gradient);
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            position: relative;
-            flex-shrink: 0;
-        }
-        
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .header-button {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        
-        .red { background: #ff5f56; }
-        .yellow { background: #ffbd2e; }
-        .green { background: #27c93f; }
-        
-        .terminal-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .terminal-body {
-            flex-grow: 1;
-            background: rgba(10, 10, 20, 0.7);
-            backdrop-filter: blur(5px);
             padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        #config-panel {
+            display: none;
+            position: absolute;
+            right: 20px;
+            top: 60px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--primary);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 100;
+            width: 300px;
+        }
+        
+        #config-panel h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        
+        .config-option {
+            margin-bottom: 10px;
+        }
+        
+        .config-option label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+        
+        #output {
+            flex-grow: 1;
             overflow-y: auto;
-            font-size: var(--font-size);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1);
         }
         
-        .welcome-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            animation: fadeIn 1s ease;
-        }
-        
-        .logo {
-            width: 150px;
-            height: 150px;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, #6e45e2, #ff7e5f);
-            border-radius: 50%;
+        #input-line {
             display: flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 30px rgba(110, 69, 226, 0.5);
         }
         
-        .logo-text {
-            font-size: 2.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #fff, #eee);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .system-info {
-            max-width: 600px;
-            margin: 20px auto;
-            line-height: 1.6;
-        }
-        
-        .prompt {
-            display: flex;
-            margin: 15px 0;
-            align-items: center;
-        }
-        
-        .prompt-user {
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-        
-        .prompt-location {
-            color: var(--secondary-color);
-            font-weight: bold;
-            margin-right: 5px;
-        }
-        
-        .prompt-symbol {
-            color: var(--accent-color);
+        #prompt {
             margin-right: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: bold;
         }
         
-        .command-input {
+        #command-input {
             flex-grow: 1;
             background: transparent;
             border: none;
-            color: var(--text-color);
-            font-family: inherit;
-            font-size: inherit;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
             outline: none;
-            caret-color: var(--accent-color);
+            caret-color: var(--primary);
+        }
+        
+        .command {
+            margin-bottom: 5px;
         }
         
         .output {
             margin-bottom: 15px;
-            line-height: 1.5;
+            white-space: pre-wrap;
         }
         
-        .settings-panel {
-            position: fixed;
-            top: 50px;
-            right: 20px;
-            background: rgba(30, 30, 60, 0.95);
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            display: none;
-            z-index: 100;
-            width: 300px;
-            backdrop-filter: blur(5px);
+        .error {
+            color: var(--error);
         }
         
-        .settings-panel h3 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .warning {
+            color: var(--warning);
         }
         
-        .close-settings {
-            cursor: pointer;
-            font-size: 1.2rem;
+        .success {
+            color: var(--primary);
         }
         
-        .settings-option {
-            margin: 15px 0;
+        .info {
+            color: var(--secondary);
         }
         
-        .settings-option label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .gradient-preview {
-            width: 100%;
-            height: 30px;
-            border-radius: 4px;
-            margin-top: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        select, input[type="range"], button {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: none;
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            font-family: inherit;
-        }
-        
-        button {
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            color: white;
+        .ascii-art {
+            color: var(--primary);
+            line-height: 1.2;
             font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.2s;
         }
         
-        button:hover {
-            transform: translateY(-2px);
+        #watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.3;
+            font-size: 0.8em;
+            color: var(--text);
         }
         
         /* Анимации */
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 var(--primary), -0.05em -0.025em 0 var(--secondary); }
+            14% { text-shadow: 0.05em 0 0 var(--primary), -0.05em -0.025em 0 var(--secondary); }
+            15% { text-shadow: -0.05em -0.025em 0 var(--primary), 0.025em 0.025em 0 var(--secondary); }
+            49% { text-shadow: -0.05em -0.025em 0 var(--primary), 0.025em 0.025em 0 var(--secondary); }
+            50% { text-shadow: 0.025em 0.05em 0 var(--primary), 0.05em 0 0 var(--secondary); }
+            99% { text-shadow: 0.025em 0.05em 0 var(--primary), 0.05em 0 0 var(--secondary); }
+            100% { text-shadow: -0.025em 0 0 var(--primary), -0.025em -0.025em 0 var(--secondary); }
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .glitch {
+            animation: glitch 5s infinite;
         }
         
-        .cursor {
-            animation: blink 1s infinite;
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
         }
         
-        /* Эффекты */
-        .terminal-container::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(110, 69, 226, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
+        .pulse {
+            animation: pulse 2s infinite;
         }
         
-        /* Скрытие welcome screen */
-        .welcome-screen.hidden {
-            display: none;
+        /* Полоса прокрутки */
+        #output::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #output::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        #output::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--primary), var(--secondary));
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="header-buttons">
-                <div class="header-button red" onclick="window.close()"></div>
-                <div class="header-button yellow" onclick="document.querySelector('.terminal-body').innerHTML = ''"></div>
-                <div class="header-button green" onclick="toggleFullscreen()"></div>
-            </div>
-            <div class="terminal-title">Веб ОС — Терминал</div>
+    <div id="terminal">
+        <div id="header">
+            <div class="glitch">ВебОС Терминал v2.4.1</div>
+            <div id="config-btn" style="cursor: pointer;">⚙️ Настройки</div>
         </div>
-        <div class="terminal-body">
-            <div class="welcome-screen" id="welcomeScreen">
-                <div class="logo">
-                    <div class="logo-text">ВОС</div>
-                </div>
-                <h1 style="background: linear-gradient(90deg, #6e45e2, #ff7e5f); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px;">Веб Операционная Система</h1>
-                
-                <div class="system-info">
-                    <p>Версия системы: <span style="color: #88d3ce;">1.0.0</span></p>
-                    <p>Сборка: <span style="color: #88d3ce;">2023.12.15</span></p>
-                    <p>Архитектура: <span style="color: #88d3ce;">Web x64</span></p>
-                    <p>Лицензия: <span style="color: #88d3ce;">Open Source</span></p>
-                    
-                    <div style="margin: 30px 0;">
-                        <p>Введите <span style="color: #ff7e5f;">help</span> для списка доступных команд</p>
-                        <p>Нажмите <span style="color: #ff7e5f;">settings</span> для настройки внешнего вида</p>
-                    </div>
-                    
-                    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; font-size: 0.9em; color: rgba(255,255,255,0.6);">
-                        © 2023 Веб ОС | Все права защищены
-                    </div>
-                </div>
+        
+        <div id="config-panel">
+            <h3>Настройки терминала</h3>
+            <div class="config-option">
+                <label for="primary-color">Основной цвет:</label>
+                <input type="color" id="primary-color" value="#00ffff">
             </div>
-            
-            <div id="commandHistory"></div>
-            
-            <div class="prompt">
-                <span class="prompt-user">user</span>
-                <span class="prompt-location">~/веб-ос</span>
-                <span class="prompt-symbol">❯</span>
-                <input type="text" class="command-input" id="commandInput" autofocus>
-                <span class="cursor">|</span>
+            <div class="config-option">
+                <label for="secondary-color">Вторичный цвет:</label>
+                <input type="color" id="secondary-color" value="#ff00ff">
+            </div>
+            <div class="config-option">
+                <label for="text-color">Цвет текста:</label>
+                <input type="color" id="text-color" value="#00ff00">
+            </div>
+            <div class="config-option">
+                <label for="bg-color">Фоновый цвет:</label>
+                <input type="color" id="bg-color" value="#000000">
+            </div>
+            <div class="config-option">
+                <label for="font-size">Размер шрифта:</label>
+                <input type="range" id="font-size" min="12" max="24" value="16">
+            </div>
+            <button id="apply-config">Применить</button>
+            <button id="reset-config">Сбросить</button>
+        </div>
+        
+        <div id="output">
+            <div class="ascii-art">
+  ██╗    ██╗███████╗██████╗  ██████╗ ███████╗<br>
+  ██║    ██║██╔════╝██╔══██╗██╔═══██╗██╔════╝<br>
+  ██║ █╗ ██║█████╗  ██████╔╝██║   ██║███████╗<br>
+  ██║███╗██║██╔══╝  ██╔══██╗██║   ██║╚════██║<br>
+  ╚███╔███╔╝███████╗██████╔╝╚██████╔╝███████║<br>
+   ╚══╝╚══╝ ╚══════╝╚═════╝  ╚═════╝ ╚══════╝<br>
+            </div>
+            <div class="output success">
+Добро пожаловать в ВебОС Терминал v2.4.1<br>
+Введите 'help' для списка доступных команд
             </div>
         </div>
         
-        <div class="settings-panel" id="settingsPanel">
-            <h3>Настройки терминала
-                <span class="close-settings" onclick="closeSettings()">×</span>
-            </h3>
-            
-            <div class="settings-option">
-                <label for="themePreset">Цветовая схема:</label>
-                <select id="themePreset" class="theme-select">
-                    <option value="default">Стандартная</option>
-                    <option value="dark">Тёмная</option>
-                    <option value="ocean">Океан</option>
-                    <option value="sunset">Закат</option>
-                    <option value="forest">Лес</option>
-                </select>
-            </div>
-            
-            <div class="settings-option">
-                <label for="bgGradient">Градиент фона:</label>
-                <select id="bgGradient" class="gradient-select">
-                    <option value="135deg, #1a1a2e, #16213e">Стандартный</option>
-                    <option value="135deg, #0f0c29, #302b63">Фиолетовый</option>
-                    <option value="135deg, #000428, #004e92">Синий</option>
-                    <option value="135deg, #1e3c72, #2a5298">Морской</option>
-                    <option value="135deg, #3a1c71, #d76d77, #ffaf7b">Закат</option>
-                </select>
-                <div class="gradient-preview" id="bgPreview"></div>
-            </div>
-            
-            <div class="settings-option">
-                <label for="headerGradient">Градиент заголовка:</label>
-                <select id="headerGradient" class="gradient-select">
-                    <option value="90deg, #6e45e2, #8925e0">Стандартный</option>
-                    <option value="90deg, #ff7e5f, #feb47b">Оранжевый</option>
-                    <option value="90deg, #11998e, #38ef7d">Зелёный</option>
-                    <option value="90deg, #fc00ff, #00dbde">Розовый</option>
-                    <option value="90deg, #f857a6, #ff5858">Яркий</option>
-                </select>
-                <div class="gradient-preview" id="headerPreview"></div>
-            </div>
-            
-            <div class="settings-option">
-                <label for="fontSize">Размер шрифта: <span id="fontSizeValue">16</span>px</label>
-                <input type="range" id="fontSize" min="12" max="24" value="16">
-            </div>
-            
-            <div class="settings-option">
-                <label for="fontFamily">Шрифт:</label>
-                <select id="fontFamily">
-                    <option value="'Fira Code', 'Courier New', monospace">Fira Code (моноширинный)</option>
-                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (без засечек)</option>
-                    <option value="'Roboto', Arial, sans-serif">Roboto</option>
-                </select>
-            </div>
-            
-            <button id="applySettings">Применить настройки</button>
+        <div id="input-line">
+            <div id="prompt">user@webos:~$</div>
+            <input type="text" id="command-input" autofocus>
         </div>
+        
+        <div id="watermark">ВебОС Терминал © 2023</div>
     </div>
 
     <script>
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            // Превью градиентов
-            document.getElementById('bgPreview').style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)';
-            document.getElementById('headerPreview').style.background = 'linear-gradient(90deg, #6e45e2, #8925e0)';
-            
-            // Обновление значения размера шрифта
-            document.getElementById('fontSize').addEventListener('input', function() {
-                document.getElementById('fontSizeValue').textContent = this.value;
-            });
-            
-            // Фокус на поле ввода
-            document.getElementById('commandInput').focus();
-        });
+        // DOM элементы
+        const output = document.getElementById('output');
+        const commandInput = document.getElementById('command-input');
+        const configBtn = document.getElementById('config-btn');
+        const configPanel = document.getElementById('config-panel');
+        const applyConfigBtn = document.getElementById('apply-config');
+        const resetConfigBtn = document.getElementById('reset-config');
+        
+        // История команд
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        // Показать приглашение
+        function showPrompt() {
+            const prompt = document.createElement('div');
+            prompt.className = 'command';
+            prompt.innerHTML = `<span id="prompt">user@webos:~$</span> ${commandInput.value}`;
+            output.appendChild(prompt);
+        }
+        
+        // Вывести результат команды
+        function showOutput(content, type = 'info') {
+            const outputElement = document.createElement('div');
+            outputElement.className = `output ${type}`;
+            outputElement.textContent = content;
+            output.appendChild(outputElement);
+            output.scrollTop = output.scrollHeight;
+        }
         
         // Обработка команд
-        document.getElementById('commandInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const command = this.value.trim();
-                this.value = '';
-                
-                // Скрываем welcome screen после первой команды
-                if (!document.getElementById('welcomeScreen').classList.contains('hidden')) {
-                    document.getElementById('welcomeScreen').classList.add('hidden');
-                }
-                
-                // Добавляем введённую команду в историю
-                addCommandToHistory(command);
-                
-                // Обработка команд
-                processCommand(command);
-            }
-        });
-        
-        function addCommandToHistory(command) {
-            const historyDiv = document.getElementById('commandHistory');
-            
-            // Создаём элемент для отображения команды
-            const commandDiv = document.createElement('div');
-            commandDiv.className = 'prompt';
-            commandDiv.innerHTML = `
-                <span class="prompt-user">user</span>
-                <span class="prompt-location">~/веб-ос</span>
-                <span class="prompt-symbol">❯</span>
-                <span style="color: var(--text-color);">${command}</span>
-            `;
-            
-            historyDiv.appendChild(commandDiv);
-        }
-        
         function processCommand(command) {
-            const historyDiv = document.getElementById('commandHistory');
-            let output = '';
+            showPrompt();
             
-            switch(command.toLowerCase()) {
-                case 'help':
-                    output = `Доступные команды:<br>
-                    <span style="color: #ff7e5f;">help</span> - показать эту справку<br>
-                    <span style="color: #ff7e5f;">settings</span> - открыть настройки терминала<br>
-                    <span style="color: #ff7e5f;">clear</span> - очистить терминал<br>
-                    <span style="color: #ff7e5f;">about</span> - информация о системе<br>
-                    <span style="color: #ff7e5f;">fullscreen</span> - переключить полноэкранный режим`;
+            // Добавляем команду в историю
+            commandHistory.push(command);
+            historyIndex = commandHistory.length;
+            
+            // Обработка команд
+            const parts = command.trim().split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1);
+            
+            switch(cmd) {
+                case '':
                     break;
                     
-                case 'settings':
-                    document.getElementById('settingsPanel').style.display = 'block';
-                    return;
+                case 'help':
+                    showOutput(`Доступные команды:
+help - показать эту справку
+clear - очистить терминал
+echo [текст] - вывести текст
+time - показать текущее время
+date - показать текущую дату
+whoami - информация о пользователе
+neofetch - информация о системе
+calc [выражение] - калькулятор
+theme - управление темой
+hack - запустить хакерский режим
+`, 'info');
+                    break;
                     
                 case 'clear':
-                    document.getElementById('commandHistory').innerHTML = '';
-                    scrollToBottom();
-                    return;
-                    
-                case 'about':
-                    output = `<span style="background: linear-gradient(90deg, #6e45e2, #ff7e5f); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: bold;">Веб ОС</span> — инновационная операционная система нового поколения.<br><br>
-                    <strong>Версия:</strong> 1.0.0<br>
-                    <strong>Сборка:</strong> 2023.12.15<br>
-                    <strong>Архитектура:</strong> Web x64<br>
-                    <strong>Лицензия:</strong> Open Source<br><br>
-                    © 2023 Веб ОС | Все права защищены`;
+                    output.innerHTML = '';
                     break;
                     
-                case 'fullscreen':
-                    toggleFullscreen();
-                    output = `Полноэкранный режим ${document.fullscreenElement ? 'выключен' : 'включен'}`;
+                case 'echo':
+                    showOutput(args.join(' '));
                     break;
                     
-                case '':
-                    // Пустая команда - ничего не делаем
-                    return;
+                case 'time':
+                    showOutput(new Date().toLocaleTimeString(), 'success');
+                    break;
+                    
+                case 'date':
+                    showOutput(new Date().toLocaleDateString(), 'success');
+                    break;
+                    
+                case 'whoami':
+                    showOutput(`Пользователь: user
+Уровень доступа: администратор
+Сессия: активна с ${new Date().toLocaleString()}`, 'info');
+                    break;
+                    
+                case 'neofetch':
+                    showOutput(`
+██╗    ██╗███████╗██████╗  ██████╗ ███████╗
+██║    ██║██╔════╝██╔══██╗██╔═══██╗██╔════╝
+██║ █╗ ██║█████╗  ██████╔╝██║   ██║███████╗
+██║███╗██║██╔══╝  ██╔══██╗██║   ██║╚════██║
+╚███╔███╔╝███████╗██████╔╝╚██████╔╝███████║
+ ╚══╝╚══╝ ╚══════╝╚═════╝  ╚═════╝ ╚══════╝
+
+ВебОС Терминал v2.4.1
+Пользователь: user
+Процессор: Quantum Core 8.4 GHz
+Память: 64 TB DDR6
+Графика: Neural Render RTX 9999
+`, 'primary');
+                    break;
+                    
+                case 'calc':
+                    try {
+                        const expression = args.join(' ');
+                        const result = eval(expression);
+                        showOutput(`${expression} = ${result}`, 'success');
+                    } catch (e) {
+                        showOutput(`Ошибка вычисления: ${e.message}`, 'error');
+                    }
+                    break;
+                    
+                case 'theme':
+                    showOutput(`Текущая тема:
+Основной цвет: ${getComputedStyle(document.documentElement).getPropertyValue('--primary')}
+Вторичный цвет: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary')}
+Цвет текста: ${getComputedStyle(document.documentElement).getPropertyValue('--text')}
+Фон: ${getComputedStyle(document.documentElement).getPropertyValue('--bg')}
+
+Используйте панель настроек (кнопка ⚙️) для изменения темы`, 'info');
+                    break;
+                    
+                case 'hack':
+                    showOutput(`Инициализация хакерского режима...`, 'warning');
+                    setTimeout(() => {
+                        showOutput(`Подключение к главному серверу...`, 'warning');
+                        setTimeout(() => {
+                            showOutput(`Взлом пентагона завершен на 0%`, 'error');
+                            let progress = 0;
+                            const hackInterval = setInterval(() => {
+                                progress += Math.random() * 10;
+                                if (progress >= 100) {
+                                    clearInterval(hackInterval);
+                                    showOutput(`Взлом пентагона завершен на 100%`, 'success');
+                                    showOutput(`как тебя легко обмануть Это всего лишь демонстрация :)`, 'info');
+                                } else {
+                                    showOutput(`Взлом пентагона завершен на ${Math.min(100, Math.round(progress))}%`, 'error');
+                                }
+                            }, 300);
+                        }, 1000);
+                    }, 1000);
+                    break;
                     
                 default:
-                    output = `<span style="color: #ff5f56;">Ошибка:</span> команда "${command}" не найдена. Введите "help" для списка команд.`;
+                    showOutput(`Команда '${cmd}' не найдена. Введите 'help' для списка команд.`, 'error');
             }
             
-            // Добавляем вывод команды
-            const outputDiv = document.createElement('div');
-            outputDiv.className = 'output';
-            outputDiv.innerHTML = output;
-            historyDiv.appendChild(outputDiv);
-            
-            scrollToBottom();
+            commandInput.value = '';
         }
         
-        function addOutput(text) {
-            const outputDiv = document.createElement('div');
-            outputDiv.className = 'output';
-            outputDiv.innerHTML = text;
-            
-            document.getElementById('commandHistory').appendChild(outputDiv);
-            scrollToBottom();
-        }
-        
-        function scrollToBottom() {
-            const terminalBody = document.querySelector('.terminal-body');
-            terminalBody.scrollTop = terminalBody.scrollHeight;
-        }
-        
-        // Настройки
-        document.getElementById('applySettings').addEventListener('click', function() {
-            // Применяем выбранную тему
-            const theme = document.getElementById('themePreset').value;
-            applyTheme(theme);
-            
-            // Применяем индивидуальные настройки
-            const bgGradient = document.getElementById('bgGradient').value;
-            const headerGradient = document.getElementById('headerGradient').value;
-            const fontSize = document.getElementById('fontSize').value;
-            const fontFamily = document.getElementById('fontFamily').value;
-            
-            document.documentElement.style.setProperty('--body-gradient', `linear-gradient(${bgGradient})`);
-            document.documentElement.style.setProperty('--header-gradient', `linear-gradient(${headerGradient})`);
-            document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
-            document.documentElement.style.setProperty('--font-family', fontFamily);
-            
-            closeSettings();
+        // Обработчик ввода команды
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                processCommand(commandInput.value);
+            } else if (e.key === 'ArrowUp') {
+                // Навигация по истории вверх
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                // Навигация по истории вниз
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+                e.preventDefault();
+            }
         });
         
-        function applyTheme(theme) {
-            switch(theme) {
-                case 'dark':
-                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0d0d0d, #1a1a1a)');
-                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #333, #555)');
-                    document.documentElement.style.setProperty('--primary-color', '#555');
-                    document.documentElement.style.setProperty('--accent-color', '#888');
-                    break;
-                    
-                case 'ocean':
-                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)');
-                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #11998e, #38ef7d)');
-                    document.documentElement.style.setProperty('--primary-color', '#11998e');
-                    document.documentElement.style.setProperty('--accent-color', '#38ef7d');
-                    break;
-                    
-                case 'sunset':
-                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b)');
-                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #ff5e62, #ff9966)');
-                    document.documentElement.style.setProperty('--primary-color', '#ff5e62');
-                    document.documentElement.style.setProperty('--accent-color', '#ff9966');
-                    break;
-                    
-                case 'forest':
-                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #0a5042, #1b8a6b, #3bb78f)');
-                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #1b8a6b, #3bb78f)');
-                    document.documentElement.style.setProperty('--primary-color', '#1b8a6b');
-                    document.documentElement.style.setProperty('--accent-color', '#3bb78f');
-                    break;
-                    
-                default: // standard
-                    document.documentElement.style.setProperty('--body-gradient', 'linear-gradient(135deg, #1a1a2e, #16213e)');
-                    document.documentElement.style.setProperty('--header-gradient', 'linear-gradient(90deg, #6e45e2, #8925e0)');
-                    document.documentElement.style.setProperty('--primary-color', '#6e45e2');
-                    document.documentElement.style.setProperty('--accent-color', '#ff7e5f');
-            }
-        }
-        
-        function closeSettings() {
-            document.getElementById('settingsPanel').style.display = 'none';
-            document.getElementById('commandInput').focus();
-        }
-        
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    addOutput(`<span style="color: #ff5f56;">Ошибка:</span> ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-        
-        // Превью градиентов
-        document.querySelectorAll('.gradient-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const previewId = this.id.replace('Gradient', 'Preview');
-                const preview = document.getElementById(previewId);
-                preview.style.background = `linear-gradient(${this.value})`;
-            });
+        // Показать/скрыть панель настроек
+        configBtn.addEventListener('click', () => {
+            configPanel.style.display = configPanel.style.display === 'block' ? 'none' : 'block';
         });
         
-        // Обработка тем
-        document.getElementById('themePreset').addEventListener('change', function() {
-            const theme = this.value;
-            const bgSelect = document.getElementById('bgGradient');
-            const headerSelect = document.getElementById('headerGradient');
-            
-            switch(theme) {
-                case 'dark':
-                    bgSelect.value = '135deg, #0d0d0d, #1a1a1a';
-                    headerSelect.value = '90deg, #333, #555';
-                    break;
-                    
-                case 'ocean':
-                    bgSelect.value = '135deg, #0f2027, #203a43, #2c5364';
-                    headerSelect.value = '90deg, #11998e, #38ef7d';
-                    break;
-                    
-                case 'sunset':
-                    bgSelect.value = '135deg, #3a1c71, #d76d77, #ffaf7b';
-                    headerSelect.value = '90deg, #ff5e62, #ff9966';
-                    break;
-                    
-                case 'forest':
-                    bgSelect.value = '135deg, #0a5042, #1b8a6b, #3bb78f';
-                    headerSelect.value = '90deg, #1b8a6b, #3bb78f';
-                    break;
-                    
-                default: // standard
-                    bgSelect.value = '135deg, #1a1a2e, #16213e';
-                    headerSelect.value = '90deg, #6e45e2, #8925e0';
-            }
-            
-            // Обновляем превью
-            document.getElementById('bgPreview').style.background = `linear-gradient(${bgSelect.value})`;
-            document.getElementById('headerPreview').style.background = `linear-gradient(${headerSelect.value})`;
+        // Применить настройки
+        applyConfigBtn.addEventListener('click', () => {
+            const root = document.documentElement;
+            root.style.setProperty('--primary', document.getElementById('primary-color').value);
+            root.style.setProperty('--secondary', document.getElementById('secondary-color').value);
+            root.style.setProperty('--text', document.getElementById('text-color').value);
+            root.style.setProperty('--bg', document.getElementById('bg-color').value);
+            document.body.style.fontSize = document.getElementById('font-size').value + 'px';
+            configPanel.style.display = 'none';
+            showOutput('Настройки применены успешно!', 'success');
         });
+        
+        // Сбросить настройки
+        resetConfigBtn.addEventListener('click', () => {
+            document.getElementById('primary-color').value = '#00ffff';
+            document.getElementById('secondary-color').value = '#ff00ff';
+            document.getElementById('text-color').value = '#00ff00';
+            document.getElementById('bg-color').value = '#000000';
+            document.getElementById('font-size').value = '16';
+            applyConfigBtn.click();
+        });
+        
+        // Фокус на поле ввода при клике в любое место
+        document.addEventListener('click', () => {
+            commandInput.focus();
+        });
+        
+        // Инициализация
+        commandInput.focus();
     </script>
 </body>
 </html>
